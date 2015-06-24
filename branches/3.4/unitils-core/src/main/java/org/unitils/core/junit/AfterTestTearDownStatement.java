@@ -29,7 +29,7 @@ public class AfterTestTearDownStatement extends Statement {
     protected Statement nextStatement;
     private Object testObject;
     private Method testMethod;
-    
+
 
 
     public AfterTestTearDownStatement(TestListener unitilsTestListener, Statement nextStatement, Object testObject, Method testMethod) {
@@ -42,7 +42,11 @@ public class AfterTestTearDownStatement extends Statement {
 
     @Override
     public void evaluate() throws Throwable {
+        try {
         nextStatement.evaluate();
-        unitilsTestListener.afterTestTearDown(testObject, testMethod);
+        } finally {
+            unitilsTestListener.afterTestTearDown(testObject, testMethod);
+        }
+
     }
 }
