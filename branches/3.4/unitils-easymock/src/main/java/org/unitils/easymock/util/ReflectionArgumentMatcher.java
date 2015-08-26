@@ -39,6 +39,8 @@ import org.unitils.reflectionassert.ReflectionComparatorMode;
 public class ReflectionArgumentMatcher<T> extends Equals {
 
 
+    /***/
+    private static final long serialVersionUID = 7522941628619033502L;
     /* The comparator for lenient comparing expected and actual argument values */
     private ReflectionComparator reflectionComparator;
 
