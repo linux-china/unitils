@@ -15,15 +15,19 @@
  */
 package org.unitils.easymock;
 
-import org.unitils.core.Unitils;
-import org.unitils.core.UnitilsException;
-import org.unitils.easymock.annotation.Mock;
-import org.unitils.easymock.util.*;
-import org.unitils.reflectionassert.ReflectionComparatorMode;
-
 import static org.easymock.EasyMock.reportMatcher;
 import static org.unitils.reflectionassert.ReflectionComparatorMode.IGNORE_DEFAULTS;
 import static org.unitils.reflectionassert.ReflectionComparatorMode.LENIENT_ORDER;
+
+import org.unitils.core.Unitils;
+import org.unitils.core.UnitilsException;
+import org.unitils.easymock.util.Calls;
+import org.unitils.easymock.util.Dates;
+import org.unitils.easymock.util.Defaults;
+import org.unitils.easymock.util.InvocationOrder;
+import org.unitils.easymock.util.Order;
+import org.unitils.easymock.util.ReflectionArgumentMatcher;
+import org.unitils.reflectionassert.ReflectionComparatorMode;
 
 /**
  * Utility facade for handling EasyMock things such as replay or manually creating a mock.
