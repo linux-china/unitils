@@ -15,11 +15,16 @@
  */
 package org.unitils.dbunit;
 
+import java.io.File;
+import java.io.IOException;
+import java.lang.annotation.Annotation;
+
+import org.unitils.core.TestContext;
 import org.unitils.core.Unitils;
+import org.unitils.dbunit.annotation.ExpectedDataSet;
 import org.unitils.dbunit.datasetfactory.DataSetFactory;
 import org.unitils.dbunit.datasetloadstrategy.DataSetLoadStrategy;
-
-import java.io.File;
+import org.unitils.dbunit.util.MultiSchemaDataSet;
 
 /**
  * Class providing access to the functionality of the dbunit module using static methods. Meant
@@ -72,6 +77,42 @@ public class DbUnitUnitils {
     }
 
 
+    public static void assertExpectedDataSet(File... datasetFile) throws IOException {
+        DbUnitModule dbUnitModule = getDbUnitModule();
+        try {
+            MultiSchemaDataSet dataSet = dbUnitModule.getDefaultDataSetFactory().createDataSet(datasetFile);
+            dbUnitModule.assertExpectedDataSets(dataSet, Unitils.getInstance().getTestContext().getTestObject());
+        } finally {
+            dbUnitModule.closeJdbcConnection();
+        }
+    }
+
+    public static void assertExpectedDataSet(final String... datasetFile) {
+        TestContext testContext = Unitils.getInstance().getTestContext();
+        ExpectedDataSet expectedDataSetAnnotation = new ExpectedDataSet() {
+
+            @Override
+            public Class<? extends Annotation> annotationType() {
+                return ExpectedDataSet.class;
+            }
+
+            @Override
+            public String[] value() {
+                return datasetFile;
+            }
+
+            @Override
+            public Class<? extends DataSetFactory> factory() {
+                return null;
+            }
+
+            @Override
+            public String databaseName() {
+                return null;
+            }
+        };
+        getDbUnitModule().assertExpectedDataSets(expectedDataSetAnnotation , testContext.getTestObject(), testContext.getTestMethod());
+    }
     /**
      * Gets the instance DbUnitModule that is registered in the modules repository.
      * This instance implements the actual behavior of the static methods in this class.
