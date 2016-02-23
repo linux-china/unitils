@@ -15,12 +15,13 @@
  */
 package org.unitils.inject.annotation;
 
-import org.unitils.inject.util.PropertyAccess;
-
 import static java.lang.annotation.ElementType.FIELD;
-import java.lang.annotation.Retention;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+
+import org.unitils.inject.util.PropertyAccess;
 
 /**
  * Annotation indicating that the the {@link org.unitils.inject.InjectModule} should try to inject the object assigned to
@@ -43,7 +44,7 @@ public @interface InjectIntoByType {
      *
      * @return the target field, null for tested object
      */
-    String target() default "";
+    String[] target() default {};
 
     /**
      * The property access that should be used for injection.
