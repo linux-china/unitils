@@ -16,8 +16,9 @@
 package org.unitils.inject.annotation;
 
 import static java.lang.annotation.ElementType.FIELD;
-import java.lang.annotation.Retention;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
@@ -41,7 +42,7 @@ public @interface InjectInto {
      *
      * @return the target field, null for tested object
      */
-    String target() default "";
+    String[] target() default {};
 
     /**
      * OGNL expression that defines the property to which the object referenced by the annotated field is injected

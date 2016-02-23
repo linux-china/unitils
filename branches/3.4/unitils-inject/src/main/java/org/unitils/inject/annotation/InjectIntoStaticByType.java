@@ -15,13 +15,14 @@
  */
 package org.unitils.inject.annotation;
 
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
 import org.unitils.inject.util.PropertyAccess;
 import org.unitils.inject.util.Restore;
-
-import static java.lang.annotation.ElementType.FIELD;
-import java.lang.annotation.Retention;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-import java.lang.annotation.Target;
 
 /**
  * Annotation indicating that the {@link org.unitils.inject.InjectModule} should try to inject the object assigned to
@@ -48,7 +49,7 @@ public @interface InjectIntoStaticByType {
      *
      * @return the target class, null for tested object
      */
-    Class<?> target();
+    Class<?>[] target() default {};
 
     /**
      * The property access that is used for injection
