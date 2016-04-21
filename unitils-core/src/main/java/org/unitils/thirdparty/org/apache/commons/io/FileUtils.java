@@ -22,7 +22,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Date;
@@ -143,7 +142,7 @@ public class FileUtils {
      * @return an array of java.io.File
      */
     public static File[] convertFileCollectionToFileArray(Collection<?> files) {
-         return (File[]) files.toArray(new File[files.size()]);
+         return files.toArray(new File[files.size()]);
     }
 
 
@@ -300,7 +299,7 @@ public class FileUtils {
         URL[] urls = new URL[files.length];
 
         for (int i = 0; i < urls.length; i++) {
-            urls[i] = files[i].toURL();
+            urls[i] = files[i].toURI().toURL();
         }
 
         return urls;

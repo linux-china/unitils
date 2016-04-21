@@ -67,13 +67,13 @@ public class DefaultScriptSource extends BaseConfigurable implements ScriptSourc
     public static final String PROPKEY_POSTPROCESSINGSCRIPT_DIRNAME = "dbMaintainer.postProcessingScript.directoryName";
 
     public static final String PROPKEY_USESCRIPTFILELASTMODIFICATIONDATES = "dbMaintainer.useScriptFileLastModificationDates.enabled";
-    
+
     public static final String PROPKEY_EXCLUDE_QUALIFIERS = "dbMaintainer.excludedQualifiers";
-    
+
     public static final String PROPKEY_INCLUDE_QUALIFIERS = "dbMaintainer.includedQualifiers";
-    
+
     public static final String PROPKEY_QUALIFIERS = "dbMaintainer.qualifiers";
-    
+
     protected List<Script> allUpdateScripts, allPostProcessingScripts;
 
 
@@ -85,6 +85,7 @@ public class DefaultScriptSource extends BaseConfigurable implements ScriptSourc
      *
      * @return all available database update scripts, not null
      */
+    @Override
     public List<Script> getAllUpdateScripts(String dialect, String databaseName, boolean defaultDatabase) {
         if (allUpdateScripts == null) {
             loadAndOrganizeAllScripts(dialect, databaseName, defaultDatabase);
@@ -134,6 +135,7 @@ public class DefaultScriptSource extends BaseConfigurable implements ScriptSourc
      * @param currentVersion The start version, not null
      * @return The scripts that have a higher index of timestamp than the start version, not null.
      */
+    @Override
     public List<Script> getNewScripts(Version currentVersion, Set<ExecutedScript> alreadyExecutedScripts, String dialect, String databaseName, boolean defaultDatabase) {
         Map<String, Script> alreadyExecutedScriptMap = convertToScriptNameScriptMap(alreadyExecutedScripts);
 
@@ -173,6 +175,7 @@ public class DefaultScriptSource extends BaseConfigurable implements ScriptSourc
      * @param currentVersion The current database version, not null
      * @return True if an existing script has been modified, false otherwise
      */
+    @Override
     public boolean isExistingIndexedScriptModified(Version currentVersion, Set<ExecutedScript> alreadyExecutedScripts, String dialect, String databaseName, boolean defaultDatabase) {
         Map<String, Script> alreadyExecutedScriptMap = convertToScriptNameScriptMap(alreadyExecutedScripts);
         List<Script> incrementalScripts = getIncrementalScripts(dialect, databaseName, defaultDatabase);
@@ -213,6 +216,7 @@ public class DefaultScriptSource extends BaseConfigurable implements ScriptSourc
      *
      * @return All the postprocessing code scripts, not null
      */
+    @Override
     public List<Script> getPostProcessingScripts(String dialect, String databaseName, boolean defaultDatabase) {
         if (allPostProcessingScripts == null) {
             loadAndOrganizeAllScripts(dialect, databaseName, defaultDatabase);
@@ -260,7 +264,7 @@ public class DefaultScriptSource extends BaseConfigurable implements ScriptSourc
         return scripts;
     }
 
-    
+
 
     /**
      * Adds all scripts available in the given directory or one of its subdirectories to the
@@ -288,25 +292,25 @@ public class DefaultScriptSource extends BaseConfigurable implements ScriptSourc
             }
         }
     }
-    
+
     /**
      * This method checks if a scriptfile is a file that should be used by every schema or if the scriptfile is a file for a specific schema.
      * @param nameFile
      * @param databaseName
      * @return {@link Boolean}
-     * 
+     *
      * @see <a href="http://www.dbmaintain.org/tutorial.html#Multi-database__user_support">more info</a>
      */
     public boolean checkIfScriptContainsCorrectDatabaseName(String nameFile, String databaseName, boolean defaultDatabase) {
         String temp = nameFile.toLowerCase();
-        
+
         if (!temp.contains("@")) {
             return (defaultDatabase ? true : false);
         }
         return temp.matches("(.*_)*@" + databaseName.toLowerCase()+ "_.+");
-        
+
     }
-    
+
     /**
      * Checks if the name of the script contains one of the qualifiers.
      * @param fileName
@@ -329,20 +333,20 @@ public class DefaultScriptSource extends BaseConfigurable implements ScriptSourc
         } else {
             return containsQualifier(fileName, includes) && !containsQualifier(fileName, excludes);
         }
-        
+
     }
 
     protected boolean containsQualifier(String fileName, List<String> qualifiers){
         for(String qualifier: qualifiers){
-            if(fileName.contains("#" + qualifier + "_")){
+            if(fileName.contains("#" + qualifier + "_") || fileName.contains("%23" + qualifier + "_")){
                 return true;
             }
         }
         return false;
     }
-    
+
     protected boolean checkIfThereAreNoQualifiers(String fileName) {
-        return !fileName.matches(".+_#\\w+_.+");
+        return !fileName.matches(".+_#\\w+_.+") && !fileName.matches(".+_%23\\w+_.+") ;
     }
 
 
