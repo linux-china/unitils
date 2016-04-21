@@ -24,31 +24,31 @@ import org.unitils.reflectionassert.ReflectionComparatorMode;
 
 /**
  * test qualifiers and multi user support in {@link ResourceScriptSource}.
- * 
+ *
  * @author wiw
- * 
- * @since 
- * 
+ *
+ * @since
+ *
  */
 @RunWith(UnitilsBlockJUnit4ClassRunner.class)
 public class ResourceScriptSourceQualifiersMultiSupportTest {
     private static final String LOCATION = "org/unitils/dbunit/testdbscripts";
-    
+
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder(new File("target/test-classes/" + LOCATION));
     @TestedObject
     private ResourceScriptSource scriptSource;
     private Properties configuration;
-    
+
     private static final String PROPKEY_EXTENTION = "dbMaintainer.script.fileExtensions";
 
-    
+
     @Before
     public void setUp() {
         configuration = new Properties();
         configuration.put(PROPKEY_EXTENTION, "sql");
     }
-    
+
     @Test
     public void testCheckIfFileMustBeAddedToScriptList() throws Exception {
         String schema1 = "USERS";
@@ -134,7 +134,7 @@ public class ResourceScriptSourceQualifiersMultiSupportTest {
         configuration.setProperty(DefaultScriptSource.PROPKEY_SCRIPT_EXTENSIONS, "sql");
         configuration.setProperty(DefaultScriptSource.PROPKEY_POSTPROCESSINGSCRIPT_DIRNAME, "postprocessing");
         configuration.setProperty(DefaultScriptSource.PROPKEY_USESCRIPTFILELASTMODIFICATIONDATES, "false");
-        
+
         scriptSource.init(configuration);
         scriptSource.getScriptsAt(actual, path, "test1", "users", true);
         List<String> actualNames = new ArrayList<String>();
@@ -167,10 +167,10 @@ public class ResourceScriptSourceQualifiersMultiSupportTest {
         configuration.setProperty(DefaultScriptSource.PROPKEY_POSTPROCESSINGSCRIPT_DIRNAME, "postprocessing");
         configuration.setProperty(DefaultScriptSource.PROPKEY_USESCRIPTFILELASTMODIFICATIONDATES, "false");
         configuration.setProperty("database.dialect", "hsqldb");
-        
+
         scriptSource.init(configuration);
 
-        
+
         List<Script> actual = new ArrayList<Script>();
 
         scriptSource.getScriptsAt(actual, path, nameFolder, "users", true);
@@ -181,30 +181,30 @@ public class ResourceScriptSourceQualifiersMultiSupportTest {
 
         Assert.assertEquals(3, actualNames.size());
 
-        ReflectionAssert.assertLenientEquals(Arrays.asList("01_#include1_products.sql", "#include1_#include2_products.sql", "01_#include1_#include2_products.sql"), actualNames);
+        ReflectionAssert.assertLenientEquals(Arrays.asList("01_%23include1_products.sql", "%23include1_%23include2_products.sql", "01_%23include1_%23include2_products.sql"), actualNames);
     }
-    
+
     @Test
     public void testGetScriptsAt_qualifiersAndMultiUserSupport_defaultDatabase() throws Exception {
         String nameFolder = "getscriptsat";
         File parentFile = tempFolder.newFolder(nameFolder);
-        
-        
+
+
         tempFolder.newFile(nameFolder + "/01_#include1_products.sql");
         tempFolder.newFile(nameFolder + "/01_#include2_@users_products.sql");
         tempFolder.newFile(nameFolder + "/01_#include2_@people_products.sql");
-        
+
         tempFolder.newFile(nameFolder + "/#include1_@people_#include2_products.sql");
         tempFolder.newFile(nameFolder + "/@users_#include1_#include2_products.sql");
         tempFolder.newFile(nameFolder + "/#include1_#include2_products.sql");
         tempFolder.newFile(nameFolder + "/01_#include1_#include2_products.sql");
         tempFolder.newFile(nameFolder + "/01_#refdata_#postgres_products.sql");
         tempFolder.newFile(nameFolder + "/01_#include1_#exclude2_products.sql");
-        
+
         String path = getPath(parentFile);
-        
+
         List<Script> actual = new ArrayList<Script>();
-        
+
         scriptSource = new ResourceScriptSource();
         configuration.setProperty(DefaultScriptSource.PROPKEY_INCLUDE_QUALIFIERS, "include1, include2, include3");
         configuration.setProperty(DefaultScriptSource.PROPKEY_EXCLUDE_QUALIFIERS, "exclude1, exclude2");
@@ -216,27 +216,27 @@ public class ResourceScriptSourceQualifiersMultiSupportTest {
         for (Script script : actual) {
             actualNames.add(script.getFileName());
         }
-        
+
         List<String> expected = new ArrayList<String>();
-        expected.add("01_#include1_products.sql");
-        expected.add("01_#include2_@users_products.sql");
-        expected.add("@users_#include1_#include2_products.sql");
-        expected.add("#include1_#include2_products.sql");
-        expected.add("01_#include1_#include2_products.sql");
-        
+        expected.add("01_%23include1_products.sql");
+        expected.add("01_%23include2_@users_products.sql");
+        expected.add("@users_%23include1_%23include2_products.sql");
+        expected.add("%23include1_%23include2_products.sql");
+        expected.add("01_%23include1_%23include2_products.sql");
+
         //Assert.assertEquals(5, actual.size());
         ReflectionAssert.assertReflectionEquals(expected, actualNames, ReflectionComparatorMode.LENIENT_ORDER);
     }
-    
+
     public String getPath(File file) {
-        
+
         File baseFile = new File("target/test-classes/");
         String path = "";
         path = file.getAbsolutePath().substring(baseFile.getAbsolutePath().length());
         path = path.startsWith(File.separator) ? path.substring(1) : path;
-        
+
         path = path.replace("\\", "/");
-        
+
         return path;
     }
 }

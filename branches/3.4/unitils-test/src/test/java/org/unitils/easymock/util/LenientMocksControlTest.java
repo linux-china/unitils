@@ -17,9 +17,9 @@ package org.unitils.easymock.util;
 
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
+import static org.easymock.MockType.DEFAULT;
 import static org.easymock.classextension.EasyMock.replay;
 import static org.easymock.classextension.EasyMock.verify;
-import static org.easymock.internal.MocksControl.MockType.DEFAULT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.unitils.easymock.EasyMockUnitils.refEq;
