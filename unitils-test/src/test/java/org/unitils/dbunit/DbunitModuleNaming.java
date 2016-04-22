@@ -1,32 +1,29 @@
 package org.unitils.dbunit;
 
-import java.util.Properties;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.unitils.core.Unitils;
 import org.unitils.dbunit.dataset.ColumnComparisonTest;
+import org.unitils.dbunit.util.DataSetFileNamesHandler;
 
 
 /**
  * DbunitModuleNaming.
- * 
+ *
  * @author Jeroen Horemans
  * @author Thomas De Rycke
  * @author Willemijn Wouters
- * 
+ *
  * @since 3.4
- * 
+ *
  */
 public class DbunitModuleNaming {
-    
-    private DbUnitModule sut;
-    
+
+    private DataSetFileNamesHandler sut;
+
     @Before
     public void setUp() {
-        sut = new DbUnitModule();
-        sut.init((Properties) Unitils.getInstance().getConfiguration().clone());
+        sut = new DataSetFileNamesHandler();
     }
 
     /**
@@ -35,23 +32,23 @@ public class DbunitModuleNaming {
     @Test
     public void testGetCorrectFileNameOnMethodLevel() throws SecurityException, NoSuchMethodException {
         JustAClass obj = new JustAClass();
-        
-        String actual = sut.getCorrectFileName(obj.getClass(), obj.getClass().getMethod("method1"), "xml");
+
+        String actual = sut.getDefaultDatasetBasedOnFilename(obj.getClass(), obj.getClass().getMethod("method1"), "xml");
         String expected = "org.unitils.dbunit.JustAClass-method1.xml";
-        
+
         Assert.assertEquals(expected, actual);
     }
-    
+
     /**
      * Test method for {@link org.unitils.dbunit.DbUnitModule#getCorrectFileName(java.lang.Class, java.lang.reflect.Method, java.lang.String)}.
      */
     @Test
     public void testGetCorrectFileNameOnClassLevel() throws SecurityException, NoSuchMethodException {
         ExpectedDataSetWithPrimaryKeysTest obj = new ExpectedDataSetWithPrimaryKeysTest();
-        
-        String actual = sut.getCorrectFileName(obj.getClass(), obj.getClass().getMethod("setUp"), "xml");
+
+        String actual = sut.getDefaultDatasetBasedOnFilename(obj.getClass(), obj.getClass().getMethod("setUp"), "xml");
         String expected = "org/unitils/dbunit/ExpectedDataSetWithPrimaryKeysTest.xml";
-        
+
         Assert.assertEquals(expected, actual);
     }
 
@@ -65,7 +62,7 @@ public class DbunitModuleNaming {
         String expected = "org/unitils/dbunit/DbunitModuleNaming$TestClass1.xml";
         Assert.assertEquals(expected, actual);
     }
-    
+
     @Test
     public void testGetDefaultDataSetFileNameClassLevel() {
         ColumnComparisonTest obj = new ColumnComparisonTest();
@@ -84,7 +81,7 @@ public class DbunitModuleNaming {
         String expected = "DbunitModuleNaming$TestClass1-testMethod.xml";
         Assert.assertEquals(expected, actual);
     }
-    
+
     /**
      * Test method for {@link org.unitils.dbunit.DbUnitModule#getDefaultDataSetFileNameMethodLevel(java.lang.Class, java.lang.reflect.Method, java.lang.String)}.
      */
@@ -95,14 +92,14 @@ public class DbunitModuleNaming {
         String expected = "ColumnComparisonTest-equalStringValue.xml";
         Assert.assertEquals(expected, actual);
     }
-    
+
     private class TestClass1 {
-        
+
         public void testMethod() {
-            
+
         }
     }
-    
-    
+
+
 
 }

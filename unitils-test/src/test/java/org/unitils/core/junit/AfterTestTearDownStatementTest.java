@@ -16,18 +16,18 @@ import org.unitils.easymock.annotation.Mock;
 
 /**
  * AfterTestTearDownStatementTest.
- * 
+ *
  * @author wiw
- * 
+ *
  * @since 3.4.1
- * 
+ *
  */
 @RunWith(UnitilsJUnit4TestClassRunner.class)
 public class AfterTestTearDownStatementTest {
-    
+
     @Mock
     private Statement statement;
-    
+
     @Mock
     private TestListener listener;
 
@@ -45,16 +45,16 @@ public class AfterTestTearDownStatementTest {
     public void testEvaluateStatementException() throws Throwable {
         TestClass2 testObject = new TestClass2();
         Method testMethod = TestClass2.class.getMethod("test1");
-        
+
         statement.evaluate();
         EasyMock.expectLastCall().andThrow(new NullPointerException());
-        
-        
+        listener.afterTestTearDown(testObject, testMethod);
+
         EasyMockUnitils.replay();
         new AfterTestTearDownStatement(listener, statement, testObject, testMethod).evaluate();
-        
+
     }
-    
+
     /**
      * Test method for {@link org.unitils.core.junit.AfterTestTearDownStatement#evaluate()}.
      */
@@ -62,28 +62,28 @@ public class AfterTestTearDownStatementTest {
     public void testEvaluateAfterTestTearDowntException() throws Throwable {
         TestClass2 testObject = new TestClass2();
         Method testMethod = TestClass2.class.getMethod("test1");
-        
+
         statement.evaluate();
         listener.afterTestTearDown(testObject, testMethod);
         EasyMock.expectLastCall().andThrow(new NullPointerException());
-        
-        
+
+
         EasyMockUnitils.replay();
         new AfterTestTearDownStatement(listener, statement, testObject, testMethod).evaluate();
-        
+
     }
-    
+
     @Test
     public void testEvaluateOk() throws Throwable {
         TestClass2 testObject = new TestClass2();
         Method testMethod = TestClass2.class.getMethod("test1");
-        
+
         statement.evaluate();
         listener.afterTestTearDown(testObject, testMethod);
-        
+
         EasyMockUnitils.replay();
         new AfterTestTearDownStatement(listener, statement, testObject, testMethod).evaluate();
-        
+
     }
 
     private class TestClass2 {
