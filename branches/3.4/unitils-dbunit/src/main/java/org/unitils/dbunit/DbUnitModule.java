@@ -25,13 +25,11 @@ import static org.unitils.util.AnnotationUtils.getMethodOrClassLevelAnnotationPr
 import static org.unitils.util.ModuleUtils.getAnnotationPropertyDefault;
 import static org.unitils.util.ModuleUtils.getAnnotationPropertyDefaults;
 import static org.unitils.util.ModuleUtils.getClassValueReplaceDefault;
+import static org.unitils.util.PropertyUtils.getInstance;
 import static org.unitils.util.ReflectionUtils.createInstanceOfType;
 import static org.unitils.util.ReflectionUtils.getClassWithName;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
@@ -74,9 +72,11 @@ import org.unitils.dbunit.datasetloadstrategy.DataSetLoadStrategy;
 import org.unitils.dbunit.datasetloadstrategy.impl.CleanInsertLoadStrategy;
 import org.unitils.dbunit.datasetloadstrategy.impl.InsertLoadStrategy;
 import org.unitils.dbunit.util.DataSetAssert;
+import org.unitils.dbunit.util.DataSetFileNamesHandler;
 import org.unitils.dbunit.util.DbUnitDatabaseConnection;
 import org.unitils.dbunit.util.FileHandler;
 import org.unitils.dbunit.util.MultiSchemaDataSet;
+import org.unitils.util.PropertyUtils;
 
 /**
  * Module that provides support for managing database test data using DBUnit.
@@ -128,8 +128,6 @@ public class DbUnitModule implements Module {
     protected String databaseName;
 
     protected String scriptExtension = "xml";
-
-    private FileHandler fileHandler = new FileHandler();
 
     /**
      * Initializes the DbUnitModule using the given Configuration
@@ -286,7 +284,7 @@ public class DbUnitModule implements Module {
     public void insertDefaultDataSet(Class<?> testClass) {
         DataSetFactory dataSetFactory = getDefaultDataSetFactory();
         String[] dataSetFileNames = new String[]{
-            getDefaultDataSetFileNameClassLevel(testClass, dataSetFactory.getDataSetFileExtension())
+            createDataSetFileNamesHandler().getDefaultDataSetFileNameClassLevel(testClass, dataSetFactory.getDataSetFileExtension())
         };
         insertDataSet(testClass, dataSetFileNames);
     }
@@ -462,7 +460,7 @@ public class DbUnitModule implements Module {
         if (dataSetFileNames.length == 0) {
             // empty means, use default file name, which is the name of the class + extension
             dataSetFileNames = new String[]{
-                getCorrectFileName(testClass, testMethod, dataSetFactory.getDataSetFileExtension())
+                createDataSetFileNamesHandler().getDefaultDatasetBasedOnFilename(testClass, testMethod, dataSetFactory.getDataSetFileExtension())
             };
         }
         return getDataSet(testClass, dataSetFileNames, dataSetFactory);
@@ -490,7 +488,7 @@ public class DbUnitModule implements Module {
         if (dataSetFileNames.length == 0) {
             // empty means use default file name
             dataSetFileNames = new String[]{
-                getDefaultExpectedDataSetFileName(testMethod, testObject.getClass(), dataSetFactory.getDataSetFileExtension())
+                createDataSetFileNamesHandler().getDefaultExpectedDataSetFileName(testMethod, testObject.getClass(), dataSetFactory.getDataSetFileExtension())
             };
         }
 
@@ -513,49 +511,15 @@ public class DbUnitModule implements Module {
         ResourcePickingStrategie resourcePickingStrategie = getResourcePickingStrategie();
 
         for (String dataSetFileName : dataSetFileNames) {
-            File dataSetFile = handleDataSetResource(new ClassPathDataLocator(), dataSetFileName, resourcePickingStrategie, testClass);
+            File dataSetFile = createDataSetFileNamesHandler().locateResource(new ClassPathDataLocator(), dataSetFileName, resourcePickingStrategie, testClass);
             dataSetFiles.add(dataSetFile);
         }
 
         logger.info("Loading DbUnit data set. File names: " + dataSetFiles);
         MultiSchemaDataSet dataSet = dataSetFactory.createDataSet(dataSetFiles.toArray(new File[dataSetFiles.size()]));
-        fileHandler.deleteFiles(dataSetFiles);
+        getFileHandler().deleteFiles(dataSetFiles);
         return dataSet;
     }
-
-    protected File handleDataSetResource(ClassPathDataLocator locator, String nameResource, ResourcePickingStrategie strategy, Class<?> testClass) {
-        //check if the packagename is in the nameResource
-        String cloneResource = new String(nameResource);
-
-        String packageName = (testClass.getPackage() != null) ? testClass.getPackage().getName() : "";
-        String tempName = "";
-        if (cloneResource.startsWith(packageName.replace(".", "/"))) {
-            cloneResource = tempName = cloneResource.substring(packageName.length()) ;
-        } else if (cloneResource.startsWith(packageName)) {
-            cloneResource = tempName = cloneResource.substring(packageName.length() + 1) ;
-        } else {
-            tempName = cloneResource;
-        }
-        InputStream in = locator.getDataResource(packageName.replace(".", "/") + "/" + tempName, strategy);
-
-        //InputStream in = locator.getDataResource(nameResource, strategy);
-        if (in == null) {
-            File resolvedFile = getDataSetResolver().resolve(testClass, cloneResource);
-            if (resolvedFile == null) {
-                throw new UnitilsException((new StringBuilder()).append("DataSetResource file with name '").append(nameResource).append("' cannot be found").toString());
-            }
-            try {
-                in = new FileInputStream(resolvedFile);
-            } catch (FileNotFoundException e) {
-                throw new UnitilsException((new StringBuilder()).append("DataSetResource file with name '").append(nameResource).append("' cannot be found").toString());
-            }
-        }
-
-        File tempFile = fileHandler.createTempFile(cloneResource);
-        fileHandler.writeToFile(tempFile, in);
-        return tempFile;
-    }
-
 
     /**
      * Creates the DbUnit dataset operation for loading a data set for the given method. If a value for loadStrategy is found on an
@@ -627,83 +591,6 @@ public class DbUnitModule implements Module {
         }
     }
 
-    protected String getCorrectFileName(Class<?> testClass, Method method, String extension) {
-        String name = getDefaultDataSetFileNameMethodLevel(testClass, method, extension);
-        DataSetResolver dataSetResolver = getDataSetResolver();
-        try {
-
-            dataSetResolver.resolve(testClass, name);
-            return testClass.getPackage().getName() + "." + name;
-        } catch (Exception e) {
-            // the DefaultDataSetFileNameMethodLevel does not exist.
-            // so the dataset should exist on classlevel.
-        }
-
-        return getDefaultDataSetFileNameClassLevel(testClass, extension);
-    }
-
-
-    /**
-     * Gets the name of the default testdata file at class level The default name is constructed as follows: 'classname without
-     * packagename'.xml
-     *
-     * @param testClass The test class, not null
-     * @param extension The configured extension of dataset files
-     * @return The default filename, not null
-     */
-    protected String getDefaultDataSetFileNameClassLevel(Class<?> testClass, String extension) {
-        String className = testClass.getName();
-        StringBuilder builder = new StringBuilder();
-
-        if (className.contains(".")) {
-            className = className.replace(".", "/");
-
-            //builder.append(className.substring(className.lastIndexOf(".") + 1));
-        }
-        builder.append(className);
-        builder.append(".");
-        builder.append(extension);
-        return builder.toString();
-    }
-
-    /**
-     * Gets the name of the default testdata file at class level The default name is constructed as follows: 'classname without
-     * packagename'-"testmethod".xml
-     *
-     * @param testClass
-     * @param method
-     * @param extension
-     * @return {@link String}
-     */
-    protected String getDefaultDataSetFileNameMethodLevel(Class<?> testClass, Method method, String extension) {
-        String className = testClass.getName();
-        StringBuilder builder = new StringBuilder();
-        if (className.contains(".")) {
-            //className = className.replace(".", "/");
-            className = className.substring(className.lastIndexOf(".") + 1);
-        }
-        builder.append(className);
-        builder.append("-");
-        builder.append(method.getName());
-        builder.append(".");
-        builder.append(extension);
-        return builder.toString();
-    }
-
-
-    /**
-     * Gets the name of the expected dataset file. The default name of this file is constructed as follows: 'classname without
-     * packagename'.'testname'-result.xml.
-     *
-     * @param method The test method, not null
-     * @param testClass The test class, not null
-     * @param extension The configured extension of dataset files, not null
-     * @return The expected dataset filename, not null
-     */
-    protected String getDefaultExpectedDataSetFileName(Method method, Class<?> testClass, String extension) {
-        String className = testClass.getName();
-        return className.replace(".", "/") + "." + method.getName() + "-result." + extension;
-    }
 
 
     /**
@@ -790,6 +677,10 @@ public class DbUnitModule implements Module {
         return getInstanceOf(ResourcePickingStrategie.class, configuration, "");
     }
 
+    protected DataSetFileNamesHandler createDataSetFileNamesHandler() {
+        return getInstance("org.unitils.dbunit.util.DataSetFileNamesHandler.implClassName", new DataSetFileNamesHandler(), configuration);
+    }
+
 
     /**
      * @return The TestListener object that implements Unitils' DbUnit support
@@ -797,6 +688,10 @@ public class DbUnitModule implements Module {
     @Override
     public TestListener getTestListener() {
         return new DbUnitListener();
+    }
+
+    protected FileHandler getFileHandler() {
+        return PropertyUtils.getInstance("org.unitils.dbunit.util.FileHandler.implClassName", new FileHandler(), configuration);
     }
 
 
@@ -818,5 +713,7 @@ public class DbUnitModule implements Module {
         }
 
     }
+
+
 
 }
