@@ -1,6 +1,5 @@
 package org.unitils.dbmaintainer.locator;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -12,17 +11,16 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.unitils.core.UnitilsException;
-import org.unitils.thirdparty.org.apache.commons.io.FileUtils;
 
 
 /**
  * Abstract class to locate resources on the classpath.
  * Will also look in jars that are in the classpath.
- * 
+ *
  * @author tdr
- * 
+ *
  * @since 1.0.2
- * 
+ *
  */
 public abstract class ClassPathResourceLocator {
     /* The logger instance for this class */
@@ -36,7 +34,7 @@ public abstract class ClassPathResourceLocator {
      * if <code>isConcreteResource</code> set to true
      * we search for a concrete resource.
      * then no deeper directory are attempted to search.
-     * 
+     *
      * @param path
      * @param isConcreteResource
      * @return List<URL>
@@ -71,7 +69,7 @@ public abstract class ClassPathResourceLocator {
 
     /**
      * Will use the Spring {@link PathMatchingResourcePatternResolver} to find a resource that corresponds to the <code>url</code>.
-     * 
+     *
      * @param url
      * @return List<URL>
      * @throws IOException
@@ -82,10 +80,15 @@ public abstract class ClassPathResourceLocator {
         List<URL> listScriptResources = new ArrayList<URL>();
 
         for (int i = 0; i < scriptResources.length; i++) {
-            URL urlResource = FileUtils.toURLs(new File[]{scriptResources[i].getFile()})[0];
+            URL urlResource = scriptResources[i].getURL();
             listScriptResources.add(urlResource);
-            logger.debug(" Resource '" + urlResource.toString() + "' added to resourcelist ");
+            logger.debug("Resource '" + urlResource.toString() + "' added to resourcelist ");
+            try {
+                urlResource.openStream();
 
+            } catch (Exception e) {
+                logger.error(" Resource '" + urlResource.toString() + "' is not found.");
+            }
         }
 
         return listScriptResources;
