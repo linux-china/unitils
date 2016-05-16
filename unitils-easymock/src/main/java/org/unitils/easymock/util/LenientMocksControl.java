@@ -121,6 +121,9 @@ public class LenientMocksControl extends MocksControl {
         /* The modes for the reflection argument matchers */
         private ReflectionComparatorMode[] modes;
 
+        public void andVoid() {
+
+        }
 
         /**
          * Creates an interceptor that will create reflection argument matchers for all arguments of all recorded
