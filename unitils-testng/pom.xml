@@ -20,8 +20,7 @@
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <version>5.8</version>
-            <classifier>jdk15</classifier>
+            <version>6.9.9</version>
         </dependency>
     </dependencies>
     <build>
